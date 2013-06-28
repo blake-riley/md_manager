@@ -1,0 +1,52 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>MD manager | {% block title %}Home{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MD Manager - A lightweight molecular dynamics management solution.">
+
+    <!-- Le styles -->
+    <link href='https://fonts.googleapis.com/css?family=Lato:400,700' rel='stylesheet' type='text/css'>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/bootstrap-responsive.min.css' %}" rel="stylesheet">
+    <link href="{% static 'md_manager.css' %}" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="{% url 'manager:index' %}">MD manager</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li><a href="{% url 'manager:index' %}">Home</a></li>
+              <li><a href="{% url 'manager:active_jobs' %}">View jobs</a></li>
+              <li><a href="{% url 'manager:active_simulations' %}">View simulations</a></li>
+              <li><a href="{% url 'manager:create_simulation' %}">New simulation</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      {% block content %}{% endblock %}
+      <hr>
+      <footer>
+       <p>&copy; Ben Porebski, {% now 'Y' %}</p>
+      </footer>
+    </div> <!-- /container -->
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'md_manager.js' %}"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>
