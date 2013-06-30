@@ -10,6 +10,15 @@ class ClusterHost(models.Model):
 	def __unicode__(self):
 		return "{0}@{1}".format(self.username, self.hostname)
 
+class Simulation(models.Model):
+	uid = models.IntegerField()
+	name = models.CharField(max_length=200)
+	active = models.BooleanField()
+	assigned_cluster = models.OneToOneField(ClusterHost)
+
+	def __unicode__(self):
+		return "{0}-{1}".format(self.uid, self.name)
+
 
 class UserProfile(models.Model):
 	user = models.OneToOneField(User)

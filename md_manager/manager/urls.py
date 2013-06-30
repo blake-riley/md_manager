@@ -4,7 +4,7 @@ from manager import views
 
 urlpatterns = patterns('',
    	url(r'^$', views.IndexView.as_view(), name='index'),
-   	url(r'^active_jobs$', views.active_jobs, name='active_jobs'),
-   	url(r'^active_simulations$', views.active_simulations, name='active_simulations'),
+   	url(r'^cluster_status$', views.cluster_status, name='cluster_status'),
+   	url(r'^view_simulations$', views.view_simulations, name='view_simulations'),
    	url(r'^create_simulation$', views.create_simulation, name='create_simulation'),
 )
