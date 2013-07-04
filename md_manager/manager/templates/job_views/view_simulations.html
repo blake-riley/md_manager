@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}View Simulations{% endblock %}
+{% block content %}
+
+
+<div class="accordion" id="accordion2">
+
+{% for project in projects %}
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse{{forloop.counter}}">
+        {{project}}<br>
+      </a>
+    </div>
+    <div id="collapse{{forloop.counter}}" class="accordion-body {% if forloop.counter == 1 %}collapse in{% else %}collapse{% endif %}">
+      <div class="accordion-inner">
+
+        {% for simulation in simulations %}
+          {% if simulation.project == project %}
+          {{simulation}}
+          {% endif %}
+
+        {% endfor %}
+
+
+      </div></div></div></div>
+{% endfor %}
+
+{% endblock %}

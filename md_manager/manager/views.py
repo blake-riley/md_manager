@@ -13,8 +13,10 @@ def cluster_status(request):
 	return render_to_response("job_views/cluster_status.html", { "cluster_status": cluster_status.get_status() })
 
 def view_simulations(request):
-	import simulations
-	return render_to_response("job_views/view_simulations.html", { "simulations": "blah" })
+	from manager.models import Simulation
+	from manager.models import Project
+	return render_to_response("job_views/view_simulations.html", { "projects": Project.objects.all(),
+																	"simulations": Simulation.objects.all() })
 
 def create_simulation(request):
 	return HttpResponse("Dummy Response")

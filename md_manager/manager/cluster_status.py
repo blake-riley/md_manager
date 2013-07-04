@@ -16,7 +16,37 @@ def get_status():
 		## Will one day need to handle multiple communication pipelines.
 		## In the event it is locally hosted on a cluster, should just call qstat directly
 
-		qstat_command = "ssh %s@%s %s -x" % (host.username, host.hostname, host.qstat_cmd)
+		job_list = parse_qstat(host.username, host.hostname, host.qstat_cmd)
+
+		pbsnodes_command = "ssh %s@%s pbsnodes -x" % (host.username, host.hostname)
+		pbsnodes_xml = subprocess.check_output(pbsnodes_command, shell=True)
+
+		## Parse pbsnodes output and compute cluster availability.
+
+		n_jobs = len(job_list)
+		total_procs = 0
+		active_procs = 0
+
+		nodes_root = ET.fromstring(pbsnodes_xml)
+		for node in nodes_root:
+			np = node.find("np").text
+			state = node.find("state").text
+			if state != "down" and state != "offline":
+				total_procs = total_procs + int(np)
+			if state == "job-exclusive":
+				active_procs = active_procs + int(np)
+
+		percentage_active = round(float(active_procs)/float(total_procs)*100, 2)
+
+		status = [n_jobs, active_procs, total_procs, percentage_active]
+
+		host_list.append((host, status, job_list))
+
+	return host_list
+
+
+def parse_qstat(username, hostname, qstat_cmd):
+		qstat_command = "ssh %s@%s %s -x" % (username, hostname, qstat_cmd)
 		qstat_xml = subprocess.check_output(qstat_command, shell=True)
 
 		## Parse qstat xml output
@@ -38,6 +68,7 @@ def get_status():
 				cores = n_nodes*ppn
 			except:
 				cores = n_nodes
+				ppn = 1
 			try:
 				work_dir = child.find("init_work_dir").text
 			except:
@@ -48,40 +79,12 @@ def get_status():
 			job_dict['job_owner'] = job_owner
 			job_dict['nodes'] = nodes
 			job_dict['n_nodes'] = n_nodes
-			job_dict['ppn'] = ppn
+			#job_dict['ppn'] = ppn
 			job_dict['cores'] = cores
 			job_dict['work_dir'] = work_dir
 
 			job_list.append(job_dict)
+		return job_list
 
-		n_jobs = len(root)
 
 
-		pbsnodes_command = "ssh %s@%s pbsnodes -x" % (host.username, host.hostname)
-		pbsnodes_xml = subprocess.check_output(pbsnodes_command, shell=True)
-
-		## Parse pbsnodes output and compute cluster availability.
-
-		total_procs = 0
-		active_procs = 0
-
-		nodes_root = ET.fromstring(pbsnodes_xml)
-		for node in nodes_root:
-			np = node.find("np").text
-			state = node.find("state").text
-			if state != "down" and state != "offline":
-				total_procs = total_procs + int(np)
-			if state == "job-exclusive":
-				active_procs = active_procs + int(np)
-
-		percentage_active = round(float(active_procs)/float(total_procs)*100, 2)
-
-		status = [n_jobs, active_procs, total_procs, percentage_active]
-
-		# for line in showq.split('\n'):
-		# 	if line.find("Processors Active") > 0:
-		# 		active_procs = line.lstrip().rstrip()
-
-		host_list.append((host, status, job_list))
-
-	return host_list
