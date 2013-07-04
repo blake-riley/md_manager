@@ -14,7 +14,7 @@ class Project(models.Model):
 	name = models.CharField(max_length=200)
 	notes = models.CharField(max_length=1000, blank=True)
 	base_dir = models.CharField(max_length=400)
-	## All simulaiton parameters should be here.
+	## All simulaiton parameters should be stored here.
 
 	## simulation_package = models.ForeignKey(SoftwareConfig)
 

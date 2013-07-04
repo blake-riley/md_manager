@@ -3,27 +3,47 @@
 {% block content %}
 
 
-<div class="accordion" id="accordion2">
+<table class='table table-condensed'><tr>
+  <thead>
+    <tr>
+      <td><b>Id</b></td><td><b>Simulaiton Name</b></td><td><b>Status</b></td><td style="text-align:center"><b>Actions</b></td>
+    </tr>
+  </thead>
+  {% for project in projects %}
+  <tr>
+    <td>{{project.id}}</td>
+    <td>
+       {{project.name}}
+    </td>
+    <td>
+      {% for simulation in project.simulation_set.all %}
+        {% if simulation.state == "active" %}
+          <span class="label label-info">{{simulation.name}}</span>
+        {% elif simulation.state == "idle" %}
+          <span class="label">{{simulation.name}}</span>
+        {% elif simulation.state == "failed" %}
+          <span class="label label-important">{{simulation.name}}</span>
+        {% elif simulation.state == "completed" %}
+          <span class="label label-success">{{simulation.name}}</span>
+        {% endif %}
+      {% endfor %}
+    </td>
+    <td style="text-align:right">
+      <button class="btn btn-mini" id="blah" data-content="And here's some amazing content. It's very engaging. right?" type="button">Update Status</button>
+      <button class="btn btn-mini" type="button">Update Status</button>
+    </td>
+  </tr>
 
-{% for project in projects %}
-  <div class="accordion-group">
-    <div class="accordion-heading">
-      <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse{{forloop.counter}}">
-        {{project}}<br>
-      </a>
-    </div>
-    <div id="collapse{{forloop.counter}}" class="accordion-body {% if forloop.counter == 1 %}collapse in{% else %}collapse{% endif %}">
-      <div class="accordion-inner">
+<!-- {% for simulation in project.simulation_set.all %}
+  {{simulation.name}}
+{% endfor %} -->
 
-        {% for simulation in simulations %}
-          {% if simulation.project == project %}
-          {{simulation}}
-          {% endif %}
+  {% endfor %}
 
-        {% endfor %}
+</table>
 
-
-      </div></div></div></div>
-{% endfor %}
+<script type="text/javascript">
+$("#blah").popover({ html:true });
+</script>
 
 {% endblock %}
