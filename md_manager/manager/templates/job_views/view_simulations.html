@@ -6,7 +6,7 @@
 <table class='table table-condensed'><tr>
   <thead>
     <tr>
-      <td><b>Id</b></td><td><b>Simulaiton Name</b></td><td><b>Status</b></td><td style="text-align:center"><b>Actions</b></td>
+      <td><b>Id</b></td><td><b>Simulation Name</b></td><td><b>Status</b></td><td style="text-align:center"><b>Actions</b></td>
     </tr>
   </thead>
   {% for project in projects %}
@@ -17,33 +17,31 @@
     </td>
     <td>
       {% for simulation in project.simulation_set.all %}
-        {% if simulation.state == "active" %}
-          <span class="label label-info">{{simulation.name}}</span>
-        {% elif simulation.state == "idle" %}
-          <span class="label">{{simulation.name}}</span>
-        {% elif simulation.state == "failed" %}
-          <span class="label label-important">{{simulation.name}}</span>
-        {% elif simulation.state == "completed" %}
-          <span class="label label-success">{{simulation.name}}</span>
-        {% endif %}
+      <button class="btn btn-mini
+        {% if simulation.state == "Active" %}
+          btn-info
+        {% elif simulation.state == "Idle" %}
+          btn-warning
+        {% elif simulation.state == "Fail" %}
+          btn-danger
+        {% elif simulation.state == "Complete" %}
+          btn-success
+        {% else %}
+          btn-inverse
+        {% endif %}make_popover" data-placement="bottom" title="{{project.name}}-{{simulation.name}}" data-content="{% include "job_views/status_popover.html" with simulation=simulation project=project %}" type="button">{{simulation.name}}</button>
       {% endfor %}
     </td>
     <td style="text-align:right">
-      <button class="btn btn-mini" id="blah" data-content="And here's some amazing content. It's very engaging. right?" type="button">Update Status</button>
       <button class="btn btn-mini" type="button">Update Status</button>
+      <button class="btn btn-mini" type="button">Job Control</button>
+      <button class="btn btn-mini" type="button">Analysis</button>
     </td>
   </tr>
 
-<!-- {% for simulation in project.simulation_set.all %}
-  {{simulation.name}}
-{% endfor %} -->
 
   {% endfor %}
 
 </table>
-
-<script type="text/javascript">
-$("#blah").popover({ html:true });
-</script>
+<a class="btn btn-mini" type="button" href="{% url 'manager:update_simulations' %}">Update All</a>
 
 {% endblock %}

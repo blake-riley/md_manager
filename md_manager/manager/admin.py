@@ -3,5 +3,6 @@ from manager.models import *
 
 admin.site.register(UserProfile)
 admin.site.register(Simulation)
+admin.site.register(SoftwareConfig)
 admin.site.register(ClusterHost)
 admin.site.register(Project)

@@ -17,6 +17,20 @@ def view_simulations(request):
 	from manager.models import Project
 	return render_to_response("job_views/view_simulations.html", { "projects": Project.objects.all(),
 																	"simulations": Simulation.objects.all() })
+def update_simulations(request):
+	from django.http import HttpResponseRedirect
+	import simulations
+	## Perform the update here
+	if len(request.GET) != 0:
+		## Update individual simulation or project of simulations
+		print "blah"
+	else:
+		## Update all simulations
+		simulations.update_status_all()
+
+	## Redirect to view_simulations page
+	return HttpResponseRedirect("/view_simulations")
+
 
 def create_simulation(request):
 	return HttpResponse("Dummy Response")

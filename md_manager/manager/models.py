@@ -10,15 +10,18 @@ class ClusterHost(models.Model):
 	def __unicode__(self):
 		return "{0}@{1}".format(self.username, self.hostname)
 
+class SoftwareConfig(models.Model):
+	name = models.CharField(max_length=100)
+	cluster = models.ForeignKey(ClusterHost)
+
+	def __unicode__(self):
+		return "{0}@{1}".format(self.name, self.cluster)
+
 class Project(models.Model):
 	name = models.CharField(max_length=200)
 	notes = models.CharField(max_length=1000, blank=True)
-	base_dir = models.CharField(max_length=400)
 	## All simulaiton parameters should be stored here.
-
-	## simulation_package = models.ForeignKey(SoftwareConfig)
-
-
+	simulation_package = models.ForeignKey(SoftwareConfig)
 
 	def __unicode__(self):
 		return "{0} :: {1}".format(self.id, self.name)
@@ -30,14 +33,16 @@ class Simulation(models.Model):
 	last_known_jobid = models.CharField(max_length=20, blank=True)
 	project = models.ForeignKey(Project)
 	assigned_cluster = models.ForeignKey(ClusterHost)
-	work_dir = models.CharField(max_length=400) ## Relative or absolute to the project base_dir
+	work_dir = models.CharField(max_length=400) ## Absolute location
 	state = models.CharField(max_length=20, blank=True) ## Active, Idle, Failed, Completed
+	notes = models.CharField(max_length=400, blank=True)
 
-	## Start date/time
-	## Estimated completion time
-	## Completed date/time
-	## Simulation rate (ns/day)
-	## nodes, ppn, total cores
+	start_time = models.DateTimeField(auto_now_add=True)
+	estimated_completion = models.DateTimeField(blank=True)
+	progression = models.CharField(max_length=20, blank=True)
+	simulation_rate = models.CharField(max_length=20, blank=True) ## ns/day
+	n_cores = models.IntegerField(blank=True)
+	last_status_update = models.DateTimeField(auto_now=True)
 
 
 	def __unicode__(self):

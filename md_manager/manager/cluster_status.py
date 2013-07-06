@@ -58,28 +58,36 @@ def parse_qstat(username, hostname, qstat_cmd):
 			job_id = child.find("Job_Id").text.split(".")[0]
 			job_name = child.find("Job_Name").text
 			job_owner = child.find("Job_Owner").text.split("@")[0]
+
 			try:
 				nodes = child.find("Resource_List").find("nodes").text
 				n_nodes = int(nodes.split(':')[0])
 			except:
 				n_nodes = 1
+
 			try:
 				ppn = int(nodes.split(':')[1].split('=')[1])
 				cores = n_nodes*ppn
 			except:
 				cores = n_nodes
 				ppn = 1
+
 			try:
 				work_dir = child.find("init_work_dir").text
 			except:
 				work_dir = ""
+
+			try:
+				state = child.find("job_state").text
+			except:
+				state = "U"
 
 			job_dict['job_id'] = job_id
 			job_dict['job_name'] = job_name
 			job_dict['job_owner'] = job_owner
 			job_dict['nodes'] = nodes
 			job_dict['n_nodes'] = n_nodes
-			#job_dict['ppn'] = ppn
+			job_dict['state'] = state
 			job_dict['cores'] = cores
 			job_dict['work_dir'] = work_dir
 
