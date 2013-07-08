@@ -1,22 +1,31 @@
 <b>Job state:</b> {{simulation.state}}<br>
-<b>Job id:</b> {{simulation.last_known_jobid}}<br>
-<b>Simulation start:</b> {{simulation.start_time}}<br>
 
-{% if simulation.progression != "" %}
-	<b>Simulation progression:</b> {{simulation.progression}}/100 blocks <br>
+{% if simulation.last_known_jobid != None and simulation.state != "Complete" %}
+<b>Job id:</b> {{simulation.last_known_jobid}}<br>
 {% endif %}
 
-{% if simulation.simulation_rate != "" %}
+<b>Simulation start:</b> {{simulation.start_time}}<br>
+
+{% if simulation.progression != None %}
+	<b>Simulation progression:</b> {{simulation.progression}}/{{simulation.project.production_protocol.total_ns}} ns <br>
+{% endif %}
+
+{% if simulation.simulation_rate != None %}
 	<b>Simulation rate:</b> {{simulation.simulation_rate}} ns/day <br>
 {% endif %}
 
-{% if simulation.state != "Active" %}
-	<b>Estimated completion:</b> {{simulation.progression}} <br>
+{% if simulation.state == "Active" and simulation.estimated_completion != None %}
+	<b>Estimated completion:</b> {{simulation.estimated_completion}} ({{simulation.estimated_completion|timeuntil}}) <br>
 {% endif %}
 
 <b>Assigned cluster:</b> {{simulation.assigned_cluster}}<br>
+
+{% if simulation.n_cores != None %}
 <b>Allocated cores:</b> {{simulation.n_cores}}<br>
+{% endif %}
+
 <b>Work dir:</b> {{simulation.work_dir}}<br>
+
 <b>Last status update:</b> {{simulation.last_status_update}}<br>
 
 {% if simulation.notes != "" %}

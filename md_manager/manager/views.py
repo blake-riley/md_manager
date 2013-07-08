@@ -21,9 +21,9 @@ def update_simulations(request):
 	from django.http import HttpResponseRedirect
 	import simulations
 	## Perform the update here
-	if len(request.GET) != 0:
-		## Update individual simulation or project of simulations
-		print "blah"
+	if "p" in request.GET:
+		## Update project
+		simulations.update_status(request.GET["p"])
 	else:
 		## Update all simulations
 		simulations.update_status_all()
@@ -32,5 +32,8 @@ def update_simulations(request):
 	return HttpResponseRedirect("/view_simulations")
 
 
+
+
+
 def create_simulation(request):
-	return HttpResponse("Dummy Response")
+	return render_to_response("simulations/create_new.html")
