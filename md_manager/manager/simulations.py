@@ -2,7 +2,7 @@ from manager.models import ClusterHost
 from manager.models import Simulation
 from manager.models import Project
 import subprocess
-
+import pytz
 import hpc
 
 
@@ -25,6 +25,9 @@ def update_status_all():
 
 def check_simulation_for_job(simulation, job_list):
 	from datetime import datetime, timedelta
+
+	## local timezone of machine to stop django whinging
+	machine_timezone = pytz.timezone("Australia/Melbourne")
 
 	if simulation.state != "Complete":
 		simulation.state = ""	## Reset state
@@ -51,6 +54,9 @@ def check_simulation_for_job(simulation, job_list):
 	if simulation.progression != None:
 		estimated_completion = float(simulation.project.production_protocol.total_ns - float(simulation.progression))/float(simulation.simulation_rate)
 		simulation.estimated_completion = datetime.now() + timedelta(days=estimated_completion)
+
+		## fix timezone
+		simulation.estimated_completion = simulation.estimated_completion.replace(tzinfo=machine_timezone)
 
 	## Check simulation for completion
 	if simulation.state == "":

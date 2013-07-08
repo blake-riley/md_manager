@@ -2,19 +2,18 @@
 {% block title %}View Simulations{% endblock %}
 {% block content %}
 
-
-<table class='table table-condensed'><tr>
+<h1>Simulations</h1>
+<table class='table table-condensed'>
   <thead>
     <tr>
       <th>Id</th><th>Simulation Name</th><th>Status</th><th style="text-align:center">Actions</th>
     </tr>
   </thead>
+  <tbody>
   {% for project in projects %}
   <tr>
     <td>{{project.id}}</td>
-    <td>
-       {{project.name}}
-    </td>
+    <td>{{project.name}}</td>
     <td>
       {% for simulation in project.simulation_set.all %}
       <button class="btn btn-mini
@@ -28,18 +27,18 @@
           btn-success
         {% else %}
           btn-inverse
-        {% endif %}make_popover" data-placement="bottom" title="{{project.name}}-{{simulation.name}}" data-content="{% include "job_views/status_popover.html" with simulation=simulation project=project %}" type="button">{{simulation.name}}</button>
+        {% endif %} make_popover" data-placement="bottom" title="{{project.name}}-{{simulation.name}}" data-content="{% include "job_views/status_popover.html" with simulation=simulation project=project %}" type="button">{{simulation.name}}</button>
       {% endfor %}
     </td>
     <td style="text-align:right">
-      <a href="{% url 'manager:update_simulations' %}?p={{project.id}}" class="btn btn-mini" type="button">Update Status</a>
+      <a href="{% url 'manager:update_simulations' %}?p={{project.id}}" class="btn btn-mini" type="button" data-loading-text="Updating..." onclick="$(this).button('loading')">Update Status</a>
       <button class="btn btn-mini" type="button">Job Control</button>
       <button class="btn btn-mini" type="button">Analysis</button>
     </td>
   </tr>
   {% endfor %}
-
+  </tbody>
 </table>
-<a class="btn btn-mini" type="button" href="{% url 'manager:update_simulations' %}">Update All</a>
+<a class="btn btn-mini" type="button" href="{% url 'manager:update_simulations' %}" data-loading-text="Updating..." onclick="$(this).button('loading')">Update All</a>
 
 {% endblock %}

@@ -1,33 +1,33 @@
-<b>Job state:</b> {{simulation.state}}<br>
+<strong>Job state:</strong> {{simulation.state}}<br />
 
 {% if simulation.last_known_jobid != None and simulation.state != "Complete" %}
-<b>Job id:</b> {{simulation.last_known_jobid}}<br>
+<strong>Job id:</strong> {{simulation.last_known_jobid}}<br />
 {% endif %}
 
-<b>Simulation start:</b> {{simulation.start_time}}<br>
+<strong>Simulation start:</strong> {{simulation.start_time}}<br />
 
 {% if simulation.progression != None %}
-	<b>Simulation progression:</b> {{simulation.progression}}/{{simulation.project.production_protocol.total_ns}} ns <br>
+	<strong>Simulation progression:</strong> {{simulation.progression}}/{{simulation.project.production_protocol.total_ns}} ns <br />
 {% endif %}
 
 {% if simulation.simulation_rate != None %}
-	<b>Simulation rate:</b> {{simulation.simulation_rate}} ns/day <br>
+	<strong>Simulation rate:</strong> {{simulation.simulation_rate}} ns/day <br />
 {% endif %}
 
 {% if simulation.state == "Active" and simulation.estimated_completion != None %}
-	<b>Estimated completion:</b> {{simulation.estimated_completion}} ({{simulation.estimated_completion|timeuntil}}) <br>
+	<strong>Estimated completion:</strong> {{simulation.estimated_completion}} ({{simulation.estimated_completion|timeuntil}}) <br />
 {% endif %}
 
-<b>Assigned cluster:</b> {{simulation.assigned_cluster}}<br>
+<strong>Assigned cluster:</strong> {{simulation.assigned_cluster}}<br />
 
 {% if simulation.n_cores != None %}
-<b>Allocated cores:</b> {{simulation.n_cores}}<br>
+<strong>Allocated cores:</strong> {{simulation.n_cores}}<br />
 {% endif %}
 
-<b>Work dir:</b> {{simulation.work_dir}}<br>
+<strong>Work dir:</strong> {{simulation.work_dir}}<br />
 
-<b>Last status update:</b> {{simulation.last_status_update}}<br>
+<strong>Last status update:</strong> {{simulation.last_status_update}}<br />
 
 {% if simulation.notes != "" %}
-	<b>Notes:</b> {{simulation.notes}}<br>
-	{% endif %}
+	<strong>Notes:</strong> {{simulation.notes}}<br />
+{% endif %}

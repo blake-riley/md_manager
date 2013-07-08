@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Cluster Status{% endblock %}
 {% block content %}
+<h1>Cluster Status</h1>
 
 <div class="accordion" id="accordion2">
 
@@ -8,18 +9,32 @@
 	<div class="accordion-group">
     <div class="accordion-heading">
       <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse{{forloop.counter}}">
-      	<table class='table table-condensed'><tr><td>{{host.0}}</td><td style="text-align:right">{{host.1.0}} active jobs, {{host.1.1}} of {{host.1.2}} processors active ({{host.1.3}}%)</td></tr></table>
+        {{host.0}}
+        <span class="pull-right">{{host.1.0}} active jobs, {{host.1.1}} of {{host.1.2}} processors active ({{host.1.3}}%)</span>
+        <span class="clearfix"></span>
       </a>
     </div>
     <div id="collapse{{forloop.counter}}" class="accordion-body {% if forloop.counter == 1 %}collapse in{% else %}collapse{% endif %}">
       <div class="accordion-inner">
-      	<table class='table table-striped'><thead>
-			<tr><td><b>Job Id</b></td><td><b>Job Name</b></td><td><b>Job Owner</b></td><td><b>Cores</b></td></tr></thead>
-      	{% for job in host.2 %}
-      		<tr><td>{{job.job_id}}</td><td>{{job.job_name}}</td><td>{{job.job_owner}}</td><td>{{job.cores}}</td></tr>
-      	{% endfor %}
+      	<table class='table table-striped'>
+          <thead>
+            <tr>
+              <th>Job Id</th>
+              <th>Job Name</th>
+              <th>Job Owner</th>
+              <th>Cores</th>
+            </tr>
+          </thead>
+          <tbody>
+        	{% for job in host.2 %}
+        		<tr><td>{{job.job_id}}</td><td>{{job.job_name}}</td><td>{{job.job_owner}}</td><td>{{job.cores}}</td></tr>
+        	{% endfor %}
+          </tbody>
       	</table>
-      </div></div></div></div>
+      </div>
+    </div>
+  </div>
 {% endfor %}
+</div>
 
 {% endblock %}

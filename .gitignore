@@ -1,6 +1,9 @@
 # Annoying compiled python things #
 *.pyc
 
+# sqlite DBs #
+*.db
+
 # OS generated files #
 ######################
 .DS_Store
