@@ -10,24 +10,26 @@
     <div class="accordion-heading">
       <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse{{forloop.counter}}">
         {{host.0}}
-        <span class="pull-right">{{host.1.0}} active jobs, {{host.1.1}} of {{host.1.2}} processors active ({{host.1.3}}%)</span>
+        <span class="pull-right">{{host.1.0}} of {{host.1.1}} jobs active, {{host.1.2}} of {{host.1.3}} processors active ({{host.1.4}}%)</span>
         <span class="clearfix"></span>
       </a>
     </div>
     <div id="collapse{{forloop.counter}}" class="accordion-body {% if forloop.counter == 1 %}collapse in{% else %}collapse{% endif %}">
       <div class="accordion-inner">
-      	<table class='table table-striped'>
+      	<table class='table table-condensed'>
           <thead>
             <tr>
               <th>Job Id</th>
               <th>Job Name</th>
               <th>Job Owner</th>
+              <th>Job State</th>
               <th>Cores</th>
             </tr>
           </thead>
           <tbody>
         	{% for job in host.2 %}
-        		<tr><td>{{job.job_id}}</td><td>{{job.job_name}}</td><td>{{job.job_owner}}</td><td>{{job.cores}}</td></tr>
+        		{% if job.state == 'R' %}<tr class="success">{% else %}<tr class="warning">{% endif %}
+				<td>{{job.job_id}}</td><td>{{job.job_name}}</td><td>{{job.job_owner}}</td><td>{{job.state}}</td><td>{{job.cores}}</td></tr>
         	{% endfor %}
           </tbody>
       	</table>

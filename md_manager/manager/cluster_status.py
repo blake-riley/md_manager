@@ -23,22 +23,31 @@ def get_status():
 
 		## Parse pbsnodes output and compute cluster availability.
 
-		n_jobs = len(job_list)
+		total_jobs = len(job_list)
+		active_jobs = 0
 		total_procs = 0
 		active_procs = 0
 
+
+		## Find total available procs on the cluster host.
 		nodes_root = ET.fromstring(pbsnodes_xml)
 		for node in nodes_root:
 			np = node.find("np").text
 			state = node.find("state").text
 			if state != "down" and state != "offline":
 				total_procs = total_procs + int(np)
-			if state == "job-exclusive":
-				active_procs = active_procs + int(np)
 
+
+		## Find the number of active jobs and procs.
+		for job in job_list:
+			if job['state'] == 'R':
+				active_jobs += 1
+				active_procs += job['cores']
+
+		## Calculate the percentage of active jobs on the cluster
 		percentage_active = round(float(active_procs)/float(total_procs)*100, 2)
 
-		status = [n_jobs, active_procs, total_procs, percentage_active]
+		status = [active_jobs, total_jobs, active_procs, total_procs, percentage_active]
 
 		host_list.append((host, status, job_list))
 
