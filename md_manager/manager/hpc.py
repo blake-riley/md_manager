@@ -22,12 +22,3 @@ class HPC:
 		retout = stdout.read()
 		reterr = stderr.read()
 		return (retout, reterr)
-
-
-
-
-# orchard = HPC("orchard.med.monash.edu", "ben")
-
-# stdout, stderr = orchard.get_OutputError("ls")
-
-# print stdout

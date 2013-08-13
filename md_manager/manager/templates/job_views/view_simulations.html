@@ -6,7 +6,7 @@
 <table class='table table-condensed'>
   <thead>
     <tr>
-      <th>Id</th><th>Simulation Name</th><th>Status</th><th style="text-align:center">Actions</th>
+      <th>Id</th><th>Simulation Name</th><th>Status</th><th style="text-align:right">Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -31,9 +31,9 @@
       {% endfor %}
     </td>
     <td style="text-align:right">
-      <a href="{% url 'manager:update_simulations' %}?p={{project.id}}" class="btn btn-mini" type="button" data-loading-text="Updating..." onclick="$(this).button('loading')">Update Status</a>
+      <a href="{% url 'manager:update_simulations' project.id %}" class="btn btn-mini" type="button" data-loading-text="Updating..." onclick="$(this).button('loading')">Update Status</a>
       <button class="btn btn-mini" type="button">Job Control</button>
-      <button class="btn btn-mini" type="button">Analysis</button>
+      <a href="{% url 'manager:view_analysis' project.id %}" class="btn btn-mini" type="button">Analysis</button>
     </td>
   </tr>
   {% endfor %}

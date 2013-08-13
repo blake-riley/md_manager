@@ -4,6 +4,22 @@ import xml.etree.ElementTree as ET
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Returns job information and cluster status.
 ## TODO: Need to fix up catagorisation of running/idle/blocked jobs.
 ##	Correctly identify cores in use - current method is only a crude estimation

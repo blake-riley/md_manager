@@ -38,8 +38,11 @@ def check_simulation_for_job(simulation, job_list):
 				if job["job_name"].find(simulation.job_uuid) != -1:
 					simulation.last_known_jobid = job["job_id"]
 					simulation.n_cores = job["cores"]
-					progression = (int(job["job_name"].split("MD")[1]) - 1) * int(simulation.project.production_protocol.ns_per_block)
-					simulation.progression = str(progression)
+					try:
+						progression = (int(job["job_name"].split("MD")[1]) - 1) * int(simulation.project.production_protocol.ns_per_block)
+						simulation.progression = str(progression)
+					except:
+						simulation.progression = None
 
 					if job["state"] == "R":
 						simulation.state = "Active"
@@ -48,80 +51,90 @@ def check_simulation_for_job(simulation, job_list):
 					if job["state"] == "H":
 						simulation.state = "Idle"
 
-	if simulation.simulation_rate == None:
-		check_gromacs_simulation_rate(simulation)
+	## Check simulation for completion
+	if simulation.state == "" or simulation.simulation_rate == None:
+		print "Checking simulation on assigned cluster"
+		if simulation.project.simulation_package.name == "gromacs":
+			check_gromacs_job(simulation)
+		elif simulation.project.simulation_package.name == "namd":
+			check_namd_job(simulation)
 
-	if simulation.progression != None:
+
+	if simulation.progression != None and simulation.simulation_rate != 0 and simulation.simulation_rate != None:
 		estimated_completion = float(simulation.project.production_protocol.total_ns - float(simulation.progression))/float(simulation.simulation_rate)
 		simulation.estimated_completion = datetime.now() + timedelta(days=estimated_completion)
 
 		## fix timezone
 		simulation.estimated_completion = simulation.estimated_completion.replace(tzinfo=machine_timezone)
 
-	## Check simulation for completion
-	if simulation.state == "":
-		print "Checking simulation on assigned cluster"
-		# if simulation.project.software_package == ""
-		check_gromacs_job(simulation)
-
-
 	simulation.save()
 
 
-def check_gromacs_simulation_rate(simulation):
-	print "Checking gromacs job for simulation rate"
+## Checks the rate and 
+def check_gromacs_job(simulation):
+	print "Checking gromacs job for simulation rate and failure or completion"
 
 	host = hpc.HPC(simulation.assigned_cluster.username, simulation.assigned_cluster.hostname)
-	performance, err = host.get_OutputError("grep 'Performance' %s/*.logout" % (simulation.work_dir))
+	performance, err = host.get_OutputError("tail %s/*.logout | grep 'Performance'" % (simulation.work_dir))
 
 	if err:
 		#Error, directory doesn't exist.
 		simulation.notes = "Error: Cannot locate simulation working directory!"
 	else:
 		rate_lines = performance.split('\n')
-		last_rate = rate_lines[len(rate_lines)-2]
+		rate_counter = 0
+		last_rate = None
+		for line in rate_lines:
+			if line.strip() != "":
+				last_rate = line
+				rate_counter += 1
 
-		simulation.simulation_rate = last_rate.split()[3] ## ns/day
+		if simulation.state != "Active":
+			if rate_counter < simulation.project.production_protocol.n_blocks:
+				simulation.state = "Fail"
+				simulation.notes = "Error: Failed at %d" % rate_counter
+			else:
+				simulation.state = "Complete"
+				simulation.progression = None
 
-
-def check_gromacs_job(simulation):
-	print "Checking gromacs simulation"
-
-	host = hpc.HPC(simulation.assigned_cluster.username, simulation.assigned_cluster.hostname)
-	log_files, err = host.get_OutputError("ls -1 %s/*.logout" % (simulation.work_dir))
-
-	cmd = ""
-	for index, log_file in enumerate(log_files.split('\n')):
-		if log_file == "":
-			continue
-		cmd += "tail %s; echo '||'; " % (log_file)
-
-	tail, err = host.get_OutputError(cmd)
-	log_index = 0
-	for i, tail_log in enumerate(tail.split('||')):
-		log_index = i
-		if tail_log.find("Performance") < 0:
-	 		break
-
-	if (len(tail.split('||')) - 1) == 0:
-		simulation.state = "Fail"
-		simulation.notes = "Error: Unable to locate simulation work_directory."
-	else:
-		if log_index < (len(tail.split('||')) - 1):
-			simulation.state = "Fail"
-			simulation.notes = "Error: Failed at %d" % log_index
-		else:
-			simulation.state = "Complete"
-
-
-
-
+		try:
+			simulation.simulation_rate = round(float(last_rate.split()[3]), 3) ## ns/day
+		except:
+			simulation.simulation_rate = None
 
 
 def check_namd_job(simulation):
 	print "Checking NAMD simulation"
 
+	host = hpc.HPC(simulation.assigned_cluster.username, simulation.assigned_cluster.hostname)
+	performance, err = host.get_OutputError("tail %s/*.log | grep 'WallClock'" % (simulation.work_dir))
 
+	if err:
+		#Error, directory doesn't exist.
+		simulation.notes = "Error: Cannot locate simulation working directory!"
+	else:
+		rate_lines = performance.split('\n')
+		rate_counter = 0
+		last_rate = None
+		for line in rate_lines:
+			if line.strip() != "":
+				last_rate = line
+				rate_counter += 1
+
+		if simulation.state != "Active":
+			if len(rate_lines) - 1 < simulation.project.production_protocol.n_blocks:
+				simulation.state = "Fail"
+				simulation.notes = "Error: Failed at %d" % (rate_counter+1)
+			else:
+				simulation.state = "Complete"
+
+		try:
+			rate_ns_day = round(1/(float(last_rate.split()[1])/simulation.project.production_protocol.ns_per_block/60/60/24), 3)
+		except:
+			rate_ns_day = None
+
+
+		simulation.simulation_rate = rate_ns_day ## ns/day
 
 def get_job_list():
 	import cluster_status
