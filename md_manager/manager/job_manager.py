@@ -69,26 +69,27 @@ class SlurmHost(Host):
 
 		#	Fill in default queue-manager specific commands
 		self.cmds = self.CommandList()
+		self.cmds.flags = {
+			'user': '-u {0} '
+		}
 		self.cmds.ssh = "ssh {0}@{1} {2}".format(self.username, self.hostname, '{0}')
-		self.cmds.list_jobs = "\"squeue -u {0} -o \'%i %j %B %a %u %U %g %G %D %C %T %S %e %l %M %L %k %s\' -h {1} \" ".format(self.username, '{0}')
-		self.cmds.list_clusterstatus = "\"sinfo -o \'%C %F\' -h\" "
+		# self.cmds.get_jobs = "\"squeue -u {0} -o \'%i %j %B %a %u %U %g %G %D %C %T %S %e %l %M %L %k %s\' -h {1} \" ".format(self.username, '{0}')
+		# self.cmds.get_jobids = "\"squeue -o \'%i\' -h {0} {1} \" "
+		self.cmds.get_jobdetails = "scontrol -d -o show job {0} "
+		self.cmds.get_clusterstatus = "\"sinfo -o \'%C %F\' -h\" "
 
 		#	May consider calling self.update_status() from here.
 
-
-	def update_job_status(self, jobid_list=[]):
+	def update_job_status(self, jobid=None):
 
 		#	Develop the command to be ssh'd ---
-		#		if jobid_list is empty, then we are updating all jobs
-		#		if jobid_list has values, we are updating only the specified jobids.
-		if len(jobid_list) == 0:
-			command = self.cmds.list_jobs.format('')
+		#		if jobid is empty, then update all jobs
+		#		if jobid has a single value, we are updating the specified jobid.
+		if jobid == None:
+			command = self.cmds.get_jobdetails.format('')
 		else:
-			jobid_string = '--jobs='
-			for jobid in jobid_list:
-				jobid_string += str(jobid)+','
-			jobid_string = jobid_string[:-1]	#	Remove the final comma
-			command = self.cmds.list_jobs.format(jobid_string)
+			assert jobid.isdigit()
+			command = self.cmds.get_jobdetails.format(jobid)
 
 		#	Now, run the ssh command to get the information
 		rawstatus = subprocess.check_output(self.cmds.ssh.format(command), shell=True)
@@ -101,9 +102,16 @@ class SlurmHost(Host):
 		entrylist = rawstatus.split('\n')
 		entrylist = filter(None, entrylist)
 
+		#	If updating all jobs, declare all jobs to be 'DEAD'.
+		#	This will be removed if updated, otherwise, job is no longer running on server.
+		#	Dead jobs can be pruned from the job list later.
+		if jobid == None:
+			for jobid, job in self.job_list.iteritems():
+				job['jobstate'] = 'DEAD' 
+
 		#	Now, parse!
 		for line in entrylist:
-			parsedjob_id, parsedjob = self.parse_jobstring(line)
+			parsedjob_id, parsedjob = self.parse_jobdetailstring(line)
 
 			#	If parsedjob_id is not already in the job_list, add it.
 			#	If it is, and it is newer than the pre-existing entry, update it.
@@ -119,37 +127,29 @@ class SlurmHost(Host):
 					pass
 
 
-	def parse_jobstring(self, jobstring):
-		entry = jobstring.split()
+	def parse_jobdetailstring(self, jobstring):
+		"""Takes a one line, one job output of scontrol, 
+		and creates a job instance from it.
+		"""
 
-		parsedjob = self.Job(
-			jobid = entry[0],
-			last_updated = time.time(),
-			jobname = entry[1],
-			exec_host = entry[2],
-			account = entry[3],
-			username = entry[4],
-			userid = entry[5],
-			group = entry[6],
-			groupid = entry[7],
-			nodes = entry[8],
-			cpus = entry[9],
-			jobstate = entry[10],
-			time_start = entry[11],
-			time_end = entry[12],
-			time_limit = entry[13],
-			time_running = entry[14],
-			time_remaining = entry[15],
-			comment = entry[16],
-			geometry = entry[20]
-			)
+		#	Create new job instance
+		parsedjob = self.Job()
+
+		#	Add a new dictionary entry for each job attribute
+		for item in jobstring.split():
+			iparted = item.partition('=')
+			parsedjob[iparted[0].lower()] = iparted[2]
+
+		#	Add update time to the parsedjob
+		parsedjob['last_updated'] = time.time()
 
 		return parsedjob['jobid'], parsedjob
+
 
 	def update_cluster_status(self):
 
 		#	First, run the ssh command to get the information
-		rawstatus = subprocess.check_output(self.cmds.ssh.format(self.cmds.list_clusterstatus), shell=True)
+		rawstatus = subprocess.check_output(self.cmds.ssh.format(self.cmds.get_clusterstatus), shell=True)
 		#	TODO: DEBUGONLY raw_cluster_status should not be an embedded variable.
 		self.raw_cluster_status = rawstatus
 
@@ -202,18 +202,19 @@ Avoca.get_status()
 Avoca.update_status()
 
 
+def get_userjobs(host, username):
+	filter_job_list = {}
+	
+	for jobid, job in host.job_list.iteritems():
+		if username in job['userid']:
+			filter_job_list[jobid] = job 
+
+	return filter_job_list
+
+get_userjobs(Avoca, 'briley')
+
+
+
 #	TODO:
 #	-	Change behaviour so that if run locally on a cluster, can run commands without ssh.
-#	-	Learn to parse the following command:
-#		>	scontrol -o show job 456149
-#		>>	JobId=456149 Name=GZMB.Mm.empty_run2.MD003 UserId=briley(3806) GroupId=VR0071(581) Priority=8396 Account=vr0071 QOS=normal JobState=RUNNING Reason=None Dependency=(null) Requeue=0 Restarts=0 BatchFlag=1 ExitCode=0:0 RunTime=3-17:09:16 TimeLimit=5-00:00:00 TimeMin=N/A SubmitTime=2013-08-08T01:17:20 EligibleTime=2013-08-08T01:17:20 StartTime=2013-08-08T01:17:20 EndTime=2013-08-13T01:17:21 PreemptTime=None SuspendTime=None SecsPreSuspend=0 Partition=main AllocNode:Sid=avoca-lb:29326 ReqMidplaneList=(null) ExcMidplaneList=(null) MidplaneList=bgq1011[30101x30231] BatchHost=avoca-lb NumNodes=8 NumCPUs=128 CPUs/Task=1 ReqS:C:T=*:*:* MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0 Features=(null) Gres=(null) Reservation=(null) Shared=OK Contiguous=0 Licenses=(null) Network=(null) Command=/vlsci/VR0071/briley/GranzymeB/NAMD2/GZMB.Mm.empty/run2/MD.Avoca.GZMB.Mm.empty_run2.MD003.sh WorkDir=/vlsci/VR0071/briley/GranzymeB/NAMD2/GZMB.Mm.empty/run2 Block_ID=RMP21Ju171328631 Connection=N,N,N,N Reboot=no Rotate=yes Geometry=1x1x2x4x1 CnloadImage=default MloaderImage=/bgsys/drivers/ppcfloor/boot/firmware IoloadImage=default
-#		>	scontrol -o show job all
-
-# parsedjob = Job()
-# for item in jobstat.split():
-# 	ipart = item.partition('=')
-# 	parsedjob[ipart[0]] = ipart[2]
-# return parsedjob
-
-
 
