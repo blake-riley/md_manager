@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Analyisis of {{ project.name }}{% endblock %}
+{% block content %}
+
+<h1>Analysis of {{project.name}}</h1>
+<br>
+<div class='span5'>
+	<table class='table table-condensed'>
+		<thead>
+			<tr>
+				<th>Project info</th> <th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Name</td> <td>{{project.name}}</td>
+			</tr>
+			<tr>
+				<td>Simulation length</td> <td>{{project.production_protocol.total_ns}} ns</td>
+			</tr>
+			<tr>
+				<td>Simulation temperature</td> <td>-Temp here- K</td>
+			</tr>
+			<tr>
+				<td>Simulation software</td> <td>{{project.simulation_package.name}}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<br>
+<table class='table table-striped'>
+  <thead>
+    <tr>
+      <th>Run</th> <th>State</th> <th>Progression</th> <th style="text-align:center">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for simulation in project.simulation_set.all %}
+  <tr>
+  	<td>{{simulation.name}}</td>
+  	<td>{{simulation.state}}</td>
+  	{% if simulation.state == 'Complete' %}
+  		<td>{{simulation.project.production_protocol.total_ns}}/{{simulation.project.production_protocol.total_ns}} ns</td>
+  	{% else %}
+  		<td>{{simulation.progression}}/{{simulation.project.production_protocol.total_ns}} ns</td>
+  	{% endif %}
+  	<td style="text-align:right">
+  		<button class="btn btn-mini" type="button">Generate RMSD</button>
+  		<button class="btn btn-mini" type="button">Generate RMSF</button>
+  		<button class="btn btn-mini" type="button">Generate snapshots</button>
+  		<button class="btn btn-mini" type="button">Generate trajectory</button>
+  	</td>
+  </tr>
+  {% endfor %}
+  <tr>
+  	<td>All</td>
+  	<td></td>
+  	<td></td>
+  	<td style="text-align:right">
+  		<button class="btn btn-mini" type="button">Request RMSD</button>
+  		<button class="btn btn-mini" type="button">Request RMSF</button>
+  		<button class="btn btn-mini" type="button">Request trajectory</button>
+  	</td>
+</tbody>
+</table>
+
+
+
+
+{% endblock %}
