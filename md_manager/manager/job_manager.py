@@ -108,6 +108,8 @@ class SlurmHost(Host):
 		if jobid == None:
 			for jobid, job in self.job_list.iteritems():
 				job['jobstate'] = 'DEAD' 
+		else:
+			self.job_list['jobid']['jobstate'] = 'DEAD'
 
 		#	Now, parse!
 		for line in entrylist:
