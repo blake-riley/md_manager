@@ -1,14 +1,58 @@
 from django.db import models
 from django.contrib.auth.models import User
+import paramiko
+import sys
 
 class ClusterHost(models.Model):
 	name = models.CharField(max_length=200)
 	username = models.CharField(max_length=200)
 	hostname = models.CharField(max_length=200)
 	qstat_cmd = models.CharField(max_length=200)
+	queue_system = models.CharField(max_length=200)
+
+	total_procs = models.IntegerField(blank=True, null=True)
+	active_procs = models.IntegerField(blank=True, null=True)
+	percentage_active = models.FloatField(blank=True, null=True)
+
+	total_jobs = models.IntegerField(blank=True, null=True)
+	active_jobs = models.IntegerField(blank=True, null=True)
+
 
 	def __unicode__(self):
 		return "{0}@{1}".format(self.username, self.hostname)
+
+
+	def exec_cmd(self, command):
+		client = paramiko.SSHClient()
+		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		client.connect(hostname=self.hostname, username=self.username, allow_agent=True)
+		stdin, stdout, stderr = client.exec_command(command)
+		retout = stdout.read()
+		reterr = stderr.read()
+		return (retout, reterr)
+
+	def update_queue(self):
+		sys.path.append("manager/hpc/")
+		module = __import__(self.queue_system)
+		module.update_queue(self)
+
+	def cancel_job(self, job_id):
+		sys.path.append("manager/hpc/")
+		module = __import__(self.queue_system)
+		module.cancel_job(self, job_id)
+
+
+class ClusterJob(models.Model):
+	job_id = models.IntegerField(blank=True, null=True)
+	job_name = models.CharField(max_length=200)
+	job_owner = models.CharField(max_length=200)
+	job_host = models.ForeignKey(ClusterHost)
+	n_cores = models.IntegerField()
+	state = models.CharField(max_length=20)
+	work_dir = models.CharField(max_length=1000)
+
+	def __unicode__(self):
+		return "{0}@{1}".format(self.job_id, self.job_host.hostname)
 
 
 
@@ -76,6 +120,11 @@ class Simulation(models.Model):
 
 	def __unicode__(self):
 		return "{0} :: {1}-{2}".format(self.id, self.project.name, self.name)
+
+	def update_simulation(self):
+		sys.path.append("manager/software/")
+		module = __import__(self.project.simulation_package.name)
+		module.update_simulation(self)
 
 
 
