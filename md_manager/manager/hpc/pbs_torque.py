@@ -120,16 +120,61 @@ def update_host(host):
 
 
 
-
 ## All queue abstractions MUST have an update_queue function!
 def update_queue(host):
 	print "Retrieving PBS Torque status information from %s" % host.hostname
 	update_jobs(host)
 	update_host(host)
 
+
+
+
+def write_script(host, nodes, ppn, walltime, job_name, cmd, modules):
+	template = '''
+#PBS -l nodes=%s:ppn=%s
+#PBS -l walltime=%s
+#PBS -N %s
+#PBS -S /bin/bash
+
+#==============================================================
+#                Script  for  %s
+#==============================================================
+
+module load %s
+
+cd $PBS_O_WORKDIR
+
+%s
+''' % (nodes, ppn, walltime, job_name, host.hostname, modules, cmd)
+
+	return template
+
+
+
+def submit_job(host, script, work_dir):
+	print "Submitting job to %s" % (host)
+
+	## Change directory to work_dir
+	## Submit job script to queuing system.
+	cmd = "cd %s; echo -e '%s' | qsub" % (work_dir, script)
+	qsub, err = host.exec_cmd(cmd)
+
+	if err:
+		return err
+	else:
+		return qsub
+
 ## All queue abstractions MUST have a cancel_job function!
 def cancel_job(host, job_id):
 	print "Cancelling job %s on %s" % (job_id, host.hostname)
+
+	cmd = "qdel %s" % job_id
+	qdel, err = host.exec_cmd(cmd)
+
+	if err:
+		return err
+	else:
+		return qdel
 
 
 
