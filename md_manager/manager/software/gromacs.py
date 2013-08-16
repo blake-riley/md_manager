@@ -18,7 +18,7 @@ def update_simulation(sim):
 
 	## Check for a job that matches sim in ClusterJob
 	for job in ClusterJob.objects.all():
-		if job.job_name.find(sim.job_uuid) != -1:
+		if job.job_name.find(sim.job_uuid) != -1 and job.state != "Complete":
 			## If we are here - we have found a matching job.
 			## Update info from job
 			sim.state = job.state
@@ -56,7 +56,7 @@ def update_simulation(sim):
 					sim.notes = "Error: Failed at %d" % rate_counter
 				else:
 					sim.state = "Complete"
-					sim.progression = None
+					sim.progression = sim.project.production_protocol.total_ns
 
 			try:
 				sim.simulation_rate = round(float(last_rate.split()[3]), 3) ## ns/day
@@ -74,4 +74,55 @@ def update_simulation(sim):
 
 
 	sim.save()
+
+
+
+def request_trajectory(sim):
+	print "Requesting gromacs trajectory."
+
+	sim_name = "%s_%s" % (sim.project.name, sim.name)
+
+	concat_file = "%s_cat.xtc" % sim_name
+	concat_noh_file = "%s_cat_noh.xtc" % sim_name
+	rmsd_file = "%s_rmsd.xvg" % sim_name
+	config = sim.project.simulation_package
+
+	ls_cmd = "ls -1 %s/*MD*.xtc" % sim.work_dir
+	n_xtc, err = sim.assigned_cluster.exec_cmd(ls_cmd)
+
+	n_cont = len(n_xtc.split('\n'))
+
+	cont = ''
+	for i in range(int(n_cont)):
+		cont += 'c\n'
+	cont += 'c'
+
+	request_cmd = """
+%s -f *MD{001..003}.xtc -o %s -settime << EOF
+%s
+EOF
+echo 1 1|%s -f %s -o %s -s *for_MD001.tpr -pbc nojump -center
+echo 1 3|%s -s *for_MD001.tpr -f %s -o %s
+rm %s
+""" % (config.gromacs_trjcat_path, concat_file,
+	cont,
+	config.gromacs_trjconv_path, concat_file, concat_noh_file,
+	config.gromacs_g_rms_path, concat_noh_file, rmsd_file,
+	concat_file)
+	
+	## Write the job submission script
+	jobname = sim_name + "_traj_analysis"
+	script = sim.assigned_cluster.write_script(1, 1, "10:0:0", jobname, request_cmd, "gromacs-intel/4.0.7")
+
+	submission = sim.assigned_cluster.submit_job(script, sim.work_dir)
+
+	sim.trajectory_state = "Requested"
+	sim.trajectory_path = sim.work_dir + "/" + concat_noh_file
+	sim.trajectory_job_id = submission.split(".")[0]
+	sim.rmsd_path = sim.work_dir + "/" + rmsd_file
+
+	sim.save()
+
+
+
 

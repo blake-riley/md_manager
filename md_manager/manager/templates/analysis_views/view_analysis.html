@@ -19,7 +19,7 @@
 				<td>Simulation length</td> <td>{{project.production_protocol.total_ns}} ns</td>
 			</tr>
 			<tr>
-				<td>Simulation temperature</td> <td>-Temp here- K</td>
+				<td>Simulation block size</td> <td>{{project.production_protocol.ns_per_block}} ns</td>
 			</tr>
 			<tr>
 				<td>Simulation software</td> <td>{{project.simulation_package.name}}</td>
@@ -36,7 +36,7 @@
     </tr>
   </thead>
   <tbody>
-  {% for simulation in project.simulation_set.all %}
+  {% for simulation in project.simulation_set.all|dictsort:"name" %}
   <tr>
   	<td>{{simulation.name}}</td>
   	<td>{{simulation.state}}</td>
@@ -46,10 +46,25 @@
   		<td>{{simulation.progression}}/{{simulation.project.production_protocol.total_ns}} ns</td>
   	{% endif %}
   	<td style="text-align:right">
-  		<button class="btn btn-mini" type="button">Generate RMSD</button>
-  		<button class="btn btn-mini" type="button">Generate RMSF</button>
-  		<button class="btn btn-mini" type="button">Generate snapshots</button>
-  		<button class="btn btn-mini" type="button">Generate trajectory</button>
+
+      {% if simulation.trajectory_state == 'Ready' and simulation.rmsd_data == "" %}
+  		<a href="{% url 'manager:request_rmsd' project.id simulation.id %}" class="btn btn-mini" type="button">Request RMSD</a>
+      {% else %}
+      <button class="btn btn-mini disabled" type="button">Request RMSD</button>
+      {% endif %}
+
+  		<button class="btn btn-mini {% if simulation.trajectory_state != 'Ready' %}disabled{% endif %}" type="button">Request RMSF</button>
+  		<button class="btn btn-mini {% if simulation.trajectory_state != 'Ready' %}disabled{% endif %}" type="button">Request snapshots</button>
+      {% if simulation.trajectory_state == '' %}
+  		<a href="{% url 'manager:request_trajectory' project.id simulation.id %}" class="btn btn-mini" type="button" data-loading-text="Requesting..." onclick="$(this).button('loading')">Request trajectory</a>
+      {% elif simulation.trajectory_state == 'Requested' %}
+      <button class="btn btn-mini btn-warning disabled" type="button">Trajectory requested</button>
+      <a href="{% url 'manager:update_analysis' project.id simulation.id %}" class="btn btn-mini" type="button">Update status</a>
+      {% elif simulation.trajectory_state == 'Ready' %}
+      <button class="btn btn-mini btn-danger" type="button">Delete trajectory</button>
+      <button class="btn btn-mini btn-success" type="button">Download trajectory</button>
+      {% endif %}
+
   	</td>
   </tr>
   {% endfor %}
@@ -58,14 +73,22 @@
   	<td></td>
   	<td></td>
   	<td style="text-align:right">
-  		<button class="btn btn-mini" type="button">Request RMSD</button>
-  		<button class="btn btn-mini" type="button">Request RMSF</button>
-  		<button class="btn btn-mini" type="button">Request trajectory</button>
+      {% if project_trajectory_state == '' %}
+        <a href="{% url 'manager:request_trajectory' project.id %}" class="btn btn-mini" type="button" data-loading-text="Requesting..." onclick="$(this).button('loading')">Request trajectory</a>
+      {% elif project_trajectory_state == 'Requested' %}
+        <button class="btn btn-mini btn-warning disabled" type="button">Trajectory requested</button>
+        <a href="{% url 'manager:update_analysis' project.id %}" class="btn btn-mini" type="button">Update status</a>
+      {% elif project_trajectory_state == 'Ready' %}
+        <button class="btn btn-mini btn-success" type="button">Download trajectories</button>
+      {% endif %}
   	</td>
 </tbody>
 </table>
 
-
-
+{% if render_rmsd == True %}
+<div class="span7 offset2">
+  <img src="{% url 'manager:render_rmsd' project.id %}" />
+</div>
+{% endif %}
 
 {% endblock %}
