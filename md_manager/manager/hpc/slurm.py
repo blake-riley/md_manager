@@ -31,13 +31,13 @@ def update_jobs(host):
 		job_id = parsedjob['jobid']
 		job_name = parsedjob['name']
 		job_owner = parsedjob['userid'].split("(")[0]
-		cores = parse_sinfo_number(parsedjob['numcpus'])
+		cores = parse_sinfo_number(parsedjob['numcpus'].split('-')[0])
 		work_dir = parsedjob['workdir']
 
 		try:
 			state = parsedjob['jobstate'].capitalize()
 			if state == "Running":
-				state = "Active"
+				state = "Active"		#	Because we use the 'Active' keyword elsewhere
 		except:
 			state = "Unknown"
 
