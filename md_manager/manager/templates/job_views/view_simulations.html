@@ -15,7 +15,7 @@
     <td>{{project.id}}</td>
     <td>{{project.name}}</td>
     <td>
-      {% for simulation in project.simulation_set.all %}
+      {% for simulation in project.simulation_set.all|dictsort:"name" %}
       <button class="btn btn-mini
         {% if simulation.state == "Active" %}
           btn-info

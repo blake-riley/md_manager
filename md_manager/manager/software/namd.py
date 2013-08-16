@@ -3,7 +3,6 @@ namd.py
 Abstraction layer for setting up, checking on and performing analysis of NAMD simulations.
 '''
 
-
 from manager.models import ClusterJob
 from datetime import datetime, timedelta
 import pytz
@@ -19,7 +18,7 @@ def update_simulation(sim):
 
 	## Check for a job that matches sim in ClusterJob
 	for job in ClusterJob.objects.all():
-		if job.job_name.find(sim.job_uuid) != -1:
+		if job.job_name.find(sim.job_uuid) != -1 and job.state != "Complete":
 			## If we are here - we have found a matching job.
 			## Update info from job
 			sim.state = job.state
@@ -79,4 +78,13 @@ def update_simulation(sim):
 
 
 	sim.save()
+
+
+
+
+
+def request_trajectory(sim):
+	print "Requesting namd trajectory."
+
+
 

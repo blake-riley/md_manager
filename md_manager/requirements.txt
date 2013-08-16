@@ -2,5 +2,7 @@ Requirements list
 
 - Django
 - Paramiko
+- Numpy
+- Matplotlib
 
 

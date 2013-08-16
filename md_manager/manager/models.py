@@ -4,11 +4,11 @@ import paramiko
 import sys
 
 class ClusterHost(models.Model):
-	name = models.CharField(max_length=200)
-	username = models.CharField(max_length=200)
-	hostname = models.CharField(max_length=200)
-	qstat_cmd = models.CharField(max_length=200)
-	queue_system = models.CharField(max_length=200)
+	name = models.TextField()
+	username = models.TextField()
+	hostname = models.TextField()
+	qstat_cmd = models.TextField()
+	queue_system = models.TextField()
 
 	total_procs = models.IntegerField(blank=True, null=True)
 	active_procs = models.IntegerField(blank=True, null=True)
@@ -34,22 +34,32 @@ class ClusterHost(models.Model):
 	def update_queue(self):
 		sys.path.append("manager/hpc/")
 		module = __import__(self.queue_system)
-		module.update_queue(self)
+		return module.update_queue(self)
+
+	def write_script(self, nodes, ppn, walltime, job_name, cmd, modules):
+		sys.path.append("manager/hpc/")
+		module = __import__(self.queue_system)
+		return module.write_script(self, nodes, ppn, walltime, job_name, cmd, modules)
+
+	def submit_job(self, script, work_dir):
+		sys.path.append("manager/hpc/")
+		module = __import__(self.queue_system)
+		return module.submit_job(self, script, work_dir)
 
 	def cancel_job(self, job_id):
 		sys.path.append("manager/hpc/")
 		module = __import__(self.queue_system)
-		module.cancel_job(self, job_id)
+		return module.cancel_job(self, job_id)
 
 
 class ClusterJob(models.Model):
 	job_id = models.IntegerField(blank=True, null=True)
-	job_name = models.CharField(max_length=200)
-	job_owner = models.CharField(max_length=200)
+	job_name = models.TextField()
+	job_owner = models.TextField()
 	job_host = models.ForeignKey(ClusterHost)
 	n_cores = models.IntegerField()
-	state = models.CharField(max_length=20)
-	work_dir = models.CharField(max_length=1000)
+	state = models.TextField()
+	work_dir = models.TextField()
 
 	def __unicode__(self):
 		return "{0}@{1}".format(self.job_id, self.job_host.hostname)
@@ -57,15 +67,29 @@ class ClusterJob(models.Model):
 
 
 class SoftwareConfig(models.Model):
-	name = models.CharField(max_length=100)
+	name = models.TextField()
+	package = models.TextField()
 	cluster = models.ForeignKey(ClusterHost)
+
+	module = models.TextField(blank=True)
+
+	## Gromacs config params
+	gromacs_trjconv_path = models.TextField(blank=True)
+	gromacs_trjcat_path = models.TextField(blank=True)
+	gromacs_g_rms_path = models.TextField(blank=True)
+
+	## NAMD config params
+	namd2_path = models.TextField(blank=True)
+	namd_catdcd_path = models.TextField(blank=True)
 
 	def __unicode__(self):
 		return "{0}@{1}".format(self.name, self.cluster)
 
+
+
 class EquilibrationProtocol(models.Model):
-	name = models.CharField(max_length=200)
-	description = models.CharField(max_length=600, blank=True)
+	name = models.TextField()
+	description = models.TextField(blank=True)
 
 
 	def __unicode__(self):
@@ -73,8 +97,8 @@ class EquilibrationProtocol(models.Model):
 
 
 class ProductionProtocol(models.Model):
-	name = models.CharField(max_length=200)
-	description = models.CharField(max_length=600, blank=True)
+	name = models.TextField()
+	description = models.TextField(blank=True)
 
 	n_blocks = models.IntegerField(blank=True, null=True)
 	steps_per_block = models.IntegerField(blank=True, null=True)
@@ -89,8 +113,8 @@ class ProductionProtocol(models.Model):
 
 
 class Project(models.Model):
-	name = models.CharField(max_length=200)
-	notes = models.CharField(max_length=1000, blank=True)
+	name = models.TextField()
+	notes = models.TextField(blank=True)
 	## All simulaiton parameters should be stored here.
 	simulation_package = models.ForeignKey(SoftwareConfig, blank=True, null=True)
 
@@ -102,14 +126,14 @@ class Project(models.Model):
 
 
 class Simulation(models.Model):
-	name = models.CharField(max_length=200)
-	job_uuid = models.CharField(max_length=200)
-	last_known_jobid = models.CharField(max_length=20, blank=True)
+	name = models.TextField()
+	job_uuid = models.TextField()
+	last_known_jobid = models.TextField(blank=True)
 	project = models.ForeignKey(Project)
 	assigned_cluster = models.ForeignKey(ClusterHost)
-	work_dir = models.CharField(max_length=400) ## Absolute location
-	state = models.CharField(max_length=20, blank=True) ## Active, Idle, Failed, Completed
-	notes = models.CharField(max_length=400, blank=True)
+	work_dir = models.TextField() ## Absolute location
+	state = models.TextField(blank=True) ## Active, Idle, Failed, Completed
+	notes = models.TextField(blank=True)
 
 	start_time = models.DateTimeField(auto_now_add=True)
 	estimated_completion = models.DateTimeField(blank=True, null=True)
@@ -118,14 +142,30 @@ class Simulation(models.Model):
 	n_cores = models.IntegerField(blank=True, null=True)
 	last_status_update = models.DateTimeField(auto_now=True)
 
+	## Analysis information ##
+
+	## Trajectories will need to be downloaded to md_manager or proxied...
+	trajectory_state = models.TextField(blank=True)
+	trajectory_path = models.TextField(blank=True)
+	trajectory_job_id = models.TextField(blank=True)
+
+	rmsd_state = models.TextField(blank=True)
+	rmsd_path = models.TextField(blank=True)
+	rmsd_job_id = models.TextField(blank=True)
+	rmsd_data = models.TextField(blank=True)
+
 	def __unicode__(self):
 		return "{0} :: {1}-{2}".format(self.id, self.project.name, self.name)
 
 	def update_simulation(self):
 		sys.path.append("manager/software/")
-		module = __import__(self.project.simulation_package.name)
-		module.update_simulation(self)
+		module = __import__(self.project.simulation_package.package)
+		return module.update_simulation(self)
 
+	def request_trajectory(self):
+		sys.path.append("manager/software/")
+		module = __import__(self.project.simulation_package.package)
+		return module.request_trajectory(self)
 
 
 
