@@ -1,8 +1,13 @@
-Requirements list
+#	Requirements list:
+#		Install using 'pip install -r requirements.txt'
 
-- Django
-- Paramiko
-- Numpy
-- Matplotlib
+#	Additionally, requires:
+#		postgresql
 
+Django
+paramiko
+numpy
+South
+matplotlib
+psycopg2
 
