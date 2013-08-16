@@ -27,9 +27,8 @@
             </tr>
           </thead>
           <tbody>
-          {% if host.total_jobs == 0 %}
-            <tr class="warning"><td colspan="5">No jobs to be displayed.</td></tr>
-          {% endif %}
+            {% if host.total_jobs == 0 and host.percentage_active != None %}<tr class="warning"><td colspan="5">No jobs to be displayed.</td></tr>{% endif %}
+            {% if host.percentage_active == None %}<tr class="error"><td colspan="5"><i>Error! Couldn't connect to server!</i></td></tr>{% endif %}
           {% for job in clusterjobs %}{% if job.job_host == host %}
               {% if job.state == 'Active' %}<tr class="success">{% else %}<tr class="warning">{% endif %}
               <td>{{job.job_id}}</td><td>{{job.job_name}}</td><td>{{job.job_owner}}</td><td>{{job.state}}</td><td>{{job.n_cores}}</td></tr>

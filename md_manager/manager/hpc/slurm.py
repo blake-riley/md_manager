@@ -5,6 +5,7 @@ Status is parsed and updated here.
 '''
 
 import sys
+import socket
 from manager.models import ClusterJob
 
 def update_jobs(host):
@@ -143,8 +144,18 @@ def parse_scontrol_string(jobstring):
 ## All queue abstractions MUST have an update_queue function!
 def update_queue(host):
 	print "Retrieving SLURM status information from %s" % host.hostname
-	update_jobs(host)
-	update_host(host)
+	try:
+		update_jobs(host)
+		update_host(host)
+	except socket.error:
+		print "Socket error! Couldn\'t connect to %s!" % host.hostname
+		host.total_procs = 0
+		host.active_procs = 0
+		host.percentage_active = None
+		host.total_jobs = 0
+		host.active_jobs = 0
+		host.save()
+
 
 def write_script(host, nodes, ppn, walltime, job_name, cmd, modules):
 	template = '''
