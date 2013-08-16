@@ -23,7 +23,11 @@ def update_jobs(host):
 	ClusterJob.objects.filter(job_host=host).delete()
 
 	## Parse qstat xml output
-	root = ET.fromstring(qstat_xml)
+	try:
+		root = ET.fromstring(qstat_xml)
+	except:
+		root = []
+
 	for child in root:
 		job_id = child.find("Job_Id").text.split(".")[0]
 		job_name = child.find("Job_Name").text
