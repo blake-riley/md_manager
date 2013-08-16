@@ -1,0 +1,20 @@
+#	To set up the database:
+#	(before running ./manage.py runserver):
+#	=========================================
+
+#	Install postgresql
+brew install postgresql
+#		(And follow the 'Caveats' section closely!)
+
+#	Use postgresql to create the database
+createdb md_manager
+
+#	Use postgresql to create a role in this database
+#		so MD_manager can administrate the database.
+psql md_manager
+	CREATE ROLE md_manager WITH LOGIN;
+	\q
+
+#	Sync the data models
+./manage.py syncdb
+
