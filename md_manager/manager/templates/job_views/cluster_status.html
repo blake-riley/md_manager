@@ -6,7 +6,7 @@
 <div class="accordion" id="accordion2">
 
 {% for host in clusterhosts %}
-	<div class="accordion-group">
+  <div class="accordion-group">
     <div class="accordion-heading">
       <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse{{forloop.counter}}">
         {{host}}
@@ -27,12 +27,15 @@
             </tr>
           </thead>
           <tbody>
-        	{% for job in clusterjobs %}
-        		{% if job.state == 'Active' %}<tr class="success">{% else %}<tr class="warning">{% endif %}
-				<td>{{job.job_id}}</td><td>{{job.job_name}}</td><td>{{job.job_owner}}</td><td>{{job.state}}</td><td>{{job.n_cores}}</td></tr>
-        	{% endfor %}
+          {% if host.total_jobs == 0 %}
+            <tr class="warning"><td colspan="5">No jobs to be displayed.</td></tr>
+          {% endif %}
+          {% for job in clusterjobs %}{% if job.job_host == host %}
+              {% if job.state == 'Active' %}<tr class="success">{% else %}<tr class="warning">{% endif %}
+              <td>{{job.job_id}}</td><td>{{job.job_name}}</td><td>{{job.job_owner}}</td><td>{{job.state}}</td><td>{{job.n_cores}}</td></tr>
+          {% endif %}{% endfor %}
           </tbody>
-      	</table>
+        </table>
       </div>
     </div>
   </div>
