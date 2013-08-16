@@ -146,12 +146,54 @@ def update_queue(host):
 	update_jobs(host)
 	update_host(host)
 
+def write_script(host, nodes, ppn, walltime, job_name, cmd, modules):
+	template = '''
+#!/bin/bash
+#SBATCH --job-name=%s
+#SBATCH --nodes=%s
+#SBATCH --time=%s
+#SBATCH --account=VR0071
+#SBATCH --output="%s.log"
+#SBATCH --error="%s.err"
+
+#==============================================================
+#                Script  for  %s
+#==============================================================
+
+module load %s
+
+cd $PBS_O_WORKDIR
+
+%s
+''' % (job_name, nodes, walltime, job_name, job_name, host.hostname, modules, cmd)
+
+	return template
+
+def submit_job(host, script, work_dir):
+	print "Submitting job to %s" % (host)
+
+	## Change directory to work_dir
+	## Submit job script to queuing system.
+	cmd = "cd %s; echo -e '%s' | sbatch" % (work_dir, script)
+	sbatch, err = host.exec_cmd(cmd)
+
+	if err:
+		return err
+	else:
+		return sbatch
+
 ## All queue abstractions MUST have a cancel_job function!
 def cancel_job(host, job_id):
 	print "Cancelling job %s on %s" % (job_id, host.hostname)
 
-def add_job (host):
-	pass
+	cmd = "scancel %s" % job_id
+	scancel, err = host.exec_cmd(cmd)
+
+	if err:
+		return err
+	else:
+		return scancel
+
 
 
 
